@@ -10,6 +10,7 @@ from Sastrawi.StopWordRemover.StopWordRemoverFactory import \
     StopWordRemoverFactory
 from sentence_transformers import SentenceTransformer
 
+
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 app = FastAPI(title="Game Recommendation & Chatbot API")
