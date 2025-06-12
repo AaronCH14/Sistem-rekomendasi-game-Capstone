@@ -1,3 +1,6 @@
+const ML_BASE_URL = "http://127.0.0.1:8000";
+const STEAM_PROXY_BASE_URL = "https://steamproxy-production.up.railway.app";
+
 const popularAppIds = [
   570, // Dota 2
   730, // CS:GO
@@ -10,10 +13,114 @@ const popularAppIds = [
 ];
 
 export async function fetchGameDetails(appId) {
-  const url = `http://localhost:3001/api/appdetails?appids=${appId}`;
+  const url = `${STEAM_PROXY_BASE_URL}/api/appdetails?appids=${appId}`;
   const response = await fetch(url);
   const gameDetail = await response.json();
   return gameDetail[appId];
+}
+
+async function searchAppIds(query) {
+  const searchUrl = `${STEAM_PROXY_BASE_URL}/api/search?query=${encodeURIComponent(
+    query
+  )}`;
+  try {
+    const response = await fetch(searchUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to search for game '${query}': ${response.statusText}`
+      );
+    }
+    const appids = await response.json();
+    return Array.isArray(appids) ? appids : [];
+  } catch (error) {
+    console.error(`Error searching App IDs for query '${query}':`, error);
+    throw error;
+  }
+}
+
+export async function parseMLRecommendation(gameName, k) {
+  const endpoint = `${ML_BASE_URL}/similar_games/`;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ game_name: gameName, k: parseInt(k, 10) }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.detail || `HTTP error from ML API! Status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+    return data.recommendations || [];
+  } catch (error) {
+    console.error("Error fetching recommendations from ML API:", error);
+    throw error;
+  }
+}
+
+export async function getRecommendedGamesWithDetails(
+  gameName,
+  numberOfRecommendations
+) {
+  try {
+    const mlRecommendations = await parseMLRecommendation(
+      gameName,
+      numberOfRecommendations
+    );
+
+    if (!mlRecommendations || mlRecommendations.length === 0) {
+      console.warn("ML API returned no recommendations or an empty list.");
+      return [];
+    }
+
+    const detailedGames = [];
+    const fetchedAppIds = new Set();
+
+    for (const mlRec of mlRecommendations) {
+      const appids = await searchAppIds(mlRec.game);
+
+      let foundDetail = null;
+      for (const appId of appids) {
+        if (fetchedAppIds.has(appId)) {
+          continue;
+        }
+
+        const detail = await fetchGameDetails(appId);
+        if (detail.success) {
+          foundDetail = {
+            title: detail.data.name,
+            description: detail.data.short_description,
+            genres: detail.data.genres
+              ? detail.data.genres.map((g) => g.description)
+              : [],
+            appid: appId,
+            distance: mlRec.distance,
+          };
+          fetchedAppIds.add(appId);
+          break;
+        }
+      }
+
+      if (foundDetail) {
+        detailedGames.push(foundDetail);
+      }
+
+      if (detailedGames.length >= numberOfRecommendations) {
+        break;
+      }
+    }
+
+    return detailedGames.slice(0, numberOfRecommendations);
+  } catch (error) {
+    console.error("Error in getRecommendedGamesWithDetails:", error);
+    return [];
+  }
 }
 
 export async function getRecommendedGames(gameName, numberOfRecommendations) {
@@ -23,7 +130,9 @@ export async function getRecommendedGames(gameName, numberOfRecommendations) {
       if (similarGames.length > 0) {
         return similarGames.slice(0, numberOfRecommendations || 5);
       } else {
-        console.warn("No similar games found by name, falling back to popular games.");
+        console.warn(
+          "No similar games found by name, falling back to popular games."
+        );
       }
     }
 
@@ -102,7 +211,7 @@ export async function searchGames(query) {
     if (filtered.length > 0) {
       return filtered;
     }
-    const searchUrl = `http://localhost:3001/api/search?query=${encodeURIComponent(
+    const searchUrl = `${STEAM_PROXY_BASE_URL}/api/search?query=${encodeURIComponent(
       query
     )}`;
     const response = await fetch(searchUrl);
@@ -224,7 +333,9 @@ export async function getSimilarGames(appId) {
 
 async function getSimilarGamesByName(gameName) {
   try {
-    const searchUrl = `http://localhost:3001/api/search?query=${encodeURIComponent(gameName)}`;
+    const searchUrl = `http://localhost:3001/api/search?query=${encodeURIComponent(
+      gameName
+    )}`;
     const response = await fetch(searchUrl);
     const appids = await response.json();
 
