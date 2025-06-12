@@ -2,6 +2,9 @@
 
 Sebuah aplikasi web dengan fitur menampilkan list game yang hits, up to date serta dilengkapi dengan sistem rekomendasi game yang menjadi fitur utama dalam pembuatan aplikasi ini
 
+Download keperluan Model pada link berikut:
+https://drive.google.com/drive/folders/1ioRPiculc1e5HOwzbihtkYkuZidKXhXt?usp=drive_link
+
 Jalankan dashboard (3 terminal di vs code) :
 
 - npm run start
