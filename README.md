@@ -8,6 +8,7 @@ https://drive.google.com/drive/folders/1ioRPiculc1e5HOwzbihtkYkuZidKXhXt?usp=dri
 Jalankan dashboard (3 terminal di vs code) :
 
 - pip install requirements.txt
+- uvicorn api:app --reload
 - npm run start
 - node src/pages/steam-proxy.js
 - cd src/database
