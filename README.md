@@ -1,3 +1,9 @@
+UPDATE MOHON DIBACA !!!!
+Seluruh project sudah dideploy secara dinamis termasuk model ML dan database user login dan register.
+silahkan akses url berikut untuk menjalani semua fiturnya : http://20.83.160.28:3002/#/
+url diatas sudah dalam full release ya..
+
+
 # Sistem-rekomendasi-game-Capstone
 
 Sebuah aplikasi web dengan fitur menampilkan list game yang hits, up to date serta dilengkapi dengan sistem rekomendasi game yang menjadi fitur utama dalam pembuatan aplikasi ini
